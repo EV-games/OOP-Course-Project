@@ -1,0 +1,21 @@
+﻿  KursovaRabota.cpp
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\include\algorithm(7399,45): error C2676: binary '-': 'const std::_List_unchecked_iterator<std::_List_val<std::_List_simple_types<_Ty>>>' does not define this operator or a conversion to a type acceptable to the predefined operator
+          with
+          [
+              _Ty=Book
+          ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\include\algorithm(7404): message : see reference to function template instantiation 'void std::sort<_RanIt,std::less<void>>(const _RanIt,const _RanIt,_Pr)' being compiled
+          with
+          [
+              _RanIt=std::_List_iterator<std::_List_val<std::_List_simple_types<Book>>>,
+              _Pr=std::less<void>
+          ]
+C:\Users\evasi\Desktop\KursovaRabota\KursovaRabota.cpp(92): message : see reference to function template instantiation 'void std::sort<std::_List_iterator<std::_List_val<std::_List_simple_types<_Ty>>>>(const _RanIt,const _RanIt)' being compiled
+          with
+          [
+              _Ty=Book,
+              _RanIt=std::_List_iterator<std::_List_val<std::_List_simple_types<Book>>>
+          ]
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\include\algorithm(7399,5): error C2672: '_Sort_unchecked': no matching overloaded function found
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\include\algorithm(7399,1): error C2780: 'void std::_Sort_unchecked(_RanIt,_RanIt,iterator_traits<_Iter>::difference_type,_Pr)': expects 4 arguments - 3 provided
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\include\algorithm(7365): message : see declaration of 'std::_Sort_unchecked'

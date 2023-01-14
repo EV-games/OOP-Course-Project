@@ -14,12 +14,6 @@ private:
 	string bookAuthor;
 	bool isTaken;
 public:
-	Book() {
-		bookTitle = "N/A";
-		bookAuthor = "N/A";
-		isTaken = false;
-	}
-
 	Book(const string& tBookTitle) {
 		bookTitle = tBookTitle;
 	}
@@ -29,13 +23,8 @@ public:
 		isTaken = tIsTaken;
 	}
 
-	void TakeBook() {
-		isTaken = true;
-	}
-
-	void ReturnBook() {
-		isTaken = false;
-	}
+	void TakeBook() { isTaken = true; }
+	void ReturnBook() { isTaken = false; }
 
 	string getBookTitle()const { return bookTitle; }
 	string getBookAuthor()const { return bookAuthor; }
@@ -45,17 +34,18 @@ public:
 	void setBookAuthor(const string& tBookAuthor) { bookAuthor = tBookAuthor; }
 	void setIsTaken(const bool& tIsTaken) { isTaken = tIsTaken; }
 
-	bool operator==(const Book& obj){ return (bookTitle == obj.bookTitle && bookAuthor == obj.bookAuthor && isTaken == obj.isTaken); }
+	bool operator==(const Book& obj){ return (bookTitle == obj.bookTitle && isTaken == obj.isTaken); }
 	bool operator<(const Book& obj) { return bookTitle < obj.bookTitle; }
 
-	string transformToString() { return "Book title: " + bookTitle + " book author: " + bookAuthor + " Taken: " + to_string(isTaken); }
+	string convertBoolToString(const bool& b) { return (b) ? "Yes" : "No"; }
+	string transformToString() { return "Book title: " + bookTitle + " Book author: " + bookAuthor + " Taken: " + convertBoolToString(isTaken); }
 
-	friend ostream& operator<<(ostream& out, const Book& obj) {
-		out << obj.bookTitle << obj.bookAuthor << obj.isTaken;
+	friend ostream& operator<<(ostream& out, Book& obj) {
+		out << obj.transformToString();
 		return out;
 	}
 	friend istream& operator>>(istream& in, Book& obj) {
-		in >> obj.bookTitle >> obj.bookAuthor >> obj.isTaken;
+		in >> obj.bookTitle >> obj.bookAuthor;
 		return in;
 	}
 };
@@ -80,8 +70,9 @@ public:
 			filein >> capacityOfStillage;
 			while (!filein.eof())
 			{
-				Book temp;
+				Book temp("");
 				filein >> temp;
+				temp.setIsTaken(false);
 				books.push_back(temp);
 			}
 			filein.close();
@@ -89,94 +80,134 @@ public:
 		else
 			throw runtime_error("File not found");
 
-		sort(books.begin(),books.end());
+		books.sort();
+
 		int br = 1;
-		list<Book>::iterator it = books.begin();
-		for (list<Book>::iterator i = books.begin(); i != books.end(); ++i)
+		for (Book& i : books)
 		{
-			if (it->getBookTitle()[0] != i->getBookTitle()[0])
-			{
-				charToNumberStillage.insert({ it->getBookTitle()[0],br });
-				while (it->getBookTitle()[0] != i->getBookTitle()[0])
-				{
-					placementInLibrary.insert({ br, *it });
-					advance(it, 1);
-				}
-				br++;
-			}
+			charToNumberStillage.insert({ i.getBookTitle()[0],br });
+			placementInLibrary.insert({ charToNumberStillage.find(i.getBookTitle()[0])->second, i });
+			br = charToNumberStillage.size() +1;
 		}
+
 	}
 
 	vector<Book> freeBooksByStillaage(const int& stillage) {
 		vector<Book> book;
-		multimap<int, Book>::iterator it;
-		for (it = placementInLibrary.begin(); it != placementInLibrary.end(); ++it)
+		if (placementInLibrary.find(stillage) != placementInLibrary.end())
 		{
-			if (it->first == stillage && !it->second.getIsTaken())
+			for (multimap<int, Book>::iterator it = placementInLibrary.lower_bound(stillage); it != placementInLibrary.upper_bound(stillage); ++it)
 			{
-				book.push_back(it->second);
+				if (!it->second.getIsTaken())
+				{
+					book.push_back(it->second);
+				}
 			}
 		}
+		else
+			throw runtime_error("No stillage found!");
 		return book;
 	}
 
 	vector<Book> takenBooksByStillaage(const int& stillage) {
 		vector<Book> book;
-		multimap<int, Book>::iterator it;
-		for (it = placementInLibrary.begin(); it != placementInLibrary.end(); ++it)
+		if (placementInLibrary.find(stillage) != placementInLibrary.end())
 		{
-			if (it->first == stillage && it->second.getIsTaken())
+			for (multimap<int, Book>::iterator it = placementInLibrary.lower_bound(stillage); it != placementInLibrary.upper_bound(stillage); ++it)
 			{
-				book.push_back(it->second);
+				if (it->second.getIsTaken())
+				{
+					book.push_back(it->second);
+				}
 			}
 		}
+		else
+			throw runtime_error("No stillage found!");
 		return book;
 	}
 
 	Book searchFreeBookByName(const string& bookName) {
+		Book b(bookName, false);
+		map<char,int>::iterator i = charToNumberStillage.find(bookName[0]);
 		multimap<int, Book>::iterator it;
-		for (it = placementInLibrary.begin(); it != placementInLibrary.end(); ++it)
+		if (i != charToNumberStillage.end())
 		{
-			if (it->second.getBookTitle() == bookName && !it->second.getIsTaken())
+			for (it = placementInLibrary.lower_bound(i->second); it != placementInLibrary.upper_bound(i->second); ++it)
 			{
-				return it->second;
+				if (it->second == b)
+				{
+					return it->second;
+				}
 			}
+			if (it == placementInLibrary.end())
+				throw runtime_error("That book is taken!");
 		}
+		else
+			throw runtime_error("No such book found!");
 	}
 
 	Book takeFreeBookByName(const string& bookName) {
+		Book b(bookName, false);
+		map<char, int>::iterator i = charToNumberStillage.find(bookName[0]);
 		multimap<int, Book>::iterator it;
-		for (it = placementInLibrary.begin(); it != placementInLibrary.end(); ++it)
+		if (i != charToNumberStillage.end())
 		{
-			if (it->second.getBookTitle() == bookName && !it->second.getIsTaken())
+			for (it = placementInLibrary.lower_bound(i->second); it != placementInLibrary.upper_bound(i->second); ++it)
 			{
-				it->second.TakeBook();
-				return it->second;
+				if (it->second == b)
+				{
+					it->second.TakeBook();
+					return it->second;
+				}
 			}
+			if (it == placementInLibrary.end())	
+				throw runtime_error("This book is already taken!");
 		}
+		else
+			throw runtime_error("No such book found!");
+
+		
+		
 	}
 
 	Book searchTakenBookByName(const string& bookName) {
+		Book b(bookName, true);
+		map<char, int>::iterator i = charToNumberStillage.find(bookName[0]);
 		multimap<int, Book>::iterator it;
-		for (it = placementInLibrary.begin(); it != placementInLibrary.end(); ++it)
-		{
-			if (it->second.getBookTitle() == bookName && it->second.getIsTaken())
+		if (i != charToNumberStillage.end()) {
+			for (it = placementInLibrary.lower_bound(i->second); it != placementInLibrary.upper_bound(i->second); ++it)
 			{
-				return it->second;
+				if (it->second == b)
+				{
+					return it->second;
+				}
 			}
+			if (it == placementInLibrary.end())
+				throw runtime_error("This book is free!");
 		}
+		else
+			throw runtime_error("No such book found!");
+		
 	}
 
 	Book returnBookByName(const string& bookName) {
+		Book b(bookName, true);
+		map<char, int>::iterator i = charToNumberStillage.find(bookName[0]);
 		multimap<int, Book>::iterator it;
-		for (it = placementInLibrary.begin(); it != placementInLibrary.end(); ++it)
-		{
-			if (it->second.getBookTitle() == bookName && it->second.getIsTaken())
+		if (i != charToNumberStillage.end()) {
+			for (it = placementInLibrary.lower_bound(i->second); it != placementInLibrary.upper_bound(i->second); ++it)
 			{
-				it->second.ReturnBook();
-				return it->second;
+				if (it->second == b)
+				{
+					it->second.ReturnBook();
+					return it->second;
+				}
 			}
+			if (it == placementInLibrary.end())
+				throw runtime_error("This book is already free!");
 		}
+		else
+			throw runtime_error("No such book found!");
 	}
 };
 
@@ -184,22 +215,34 @@ int main()
 {
 	Library lib("Library.txt");
 	vector<Book> freeBooks = lib.freeBooksByStillaage(1);
-	vector<Book> takenBooks = lib.takenBooksByStillaage(1);
 
-	for (vector<Book>::iterator i = freeBooks.begin(); i != freeBooks.end(); ++i)
-	{
-		cout << *i << endl;
+
+	cout << "Free Books in stillaage 1: " << endl;
+	for (Book& i : freeBooks) {
+		cout << i << endl;
 	}
 
-	for (vector<Book>::iterator i = takenBooks.begin(); i != takenBooks.end(); ++i)
-	{
-		cout << *i << endl;
-	}
 
 	Book b = lib.takeFreeBookByName("Book12");
-	cout << b<<endl;
-	Book c = lib.returnBookByName("Book12");
-	cout << c << endl;
+	if (b.getIsTaken())
+	{
+		cout << "Taken book:  ";
+		cout << b << endl;
+	}
 
+	Book c = lib.returnBookByName("Book20");
+	if (c.getIsTaken())
+	{
+		cout << "Freed book:   ";
+		cout << c << endl;
+	}
+
+	vector<Book> takenBooks = lib.takenBooksByStillaage(1);
+	cout << "Taken Books in stillaage 1: " << endl;
+	for (Book& i : takenBooks) {
+		cout << i << endl;
+	}
+
+	return 0;
 
 }
